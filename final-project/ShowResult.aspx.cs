@@ -21,7 +21,18 @@ namespace final_project
         private void LoadCoursesDropdown()
         {
             string coursesPath = Server.MapPath("~/files/Feedback/");
+            if (!Directory.Exists(coursesPath))
+            {
+                Response.Write("<script>alert('Feedback directory not found');</script>");
+                return;
+            }
+
             string[] courseFiles = Directory.GetFiles(coursesPath, "*.txt");
+            if (courseFiles.Length == 0)
+            {
+                Response.Write("<script>alert('No feedback files found');</script>");
+                return;
+            }
 
             HashSet<string> courseNames = new HashSet<string>();
 
@@ -32,6 +43,8 @@ namespace final_project
                 courseNames.Add(courseName);
             }
 
+            DropDownList1.Items.Clear();
+            DropDownList1.Items.Add(new ListItem("Select Course", ""));
             foreach (string courseName in courseNames)
             {
                 DropDownList1.Items.Add(new ListItem(courseName, courseName));
@@ -42,7 +55,7 @@ namespace final_project
         {
             string selectedCourse = DropDownList1.SelectedValue;
 
-            if (selectedCourse == "")
+            if (string.IsNullOrEmpty(selectedCourse))
             {
                 ResetResults();
             }
@@ -75,12 +88,15 @@ namespace final_project
                     string[] lines = File.ReadAllLines(file);
                     foreach (string line in lines)
                     {
-                        string[] parts = line.Split(new char[] { '?', '.' }, StringSplitOptions.RemoveEmptyEntries);
-                        if (parts.Length == 2)
+                        if (line.Contains(':'))
                         {
-                            string answer = parts[1].Trim();
-                            totalScore += ConvertAnswerToScore(answer);
-                            questionCount++;
+                            string[] parts = line.Split(new char[] { ':', '?' }, StringSplitOptions.RemoveEmptyEntries);
+                            if (parts.Length >= 3)
+                            {
+                                string answer = parts[2].Trim();
+                                totalScore += ConvertAnswerToScore(answer);
+                                questionCount++;
+                            }
                         }
                     }
 
@@ -97,6 +113,11 @@ namespace final_project
                 int percentageScore = (int)percentageScoreb;
 
                 DisplayResult(percentageScore);
+            }
+            else
+            {
+                Response.Write("<script>alert('No questions found for the selected course');</script>");
+                ResetResults();
             }
         }
 
@@ -143,14 +164,14 @@ namespace final_project
                 backgroundColor = "red";
             }
 
-            ResultLabel.Text = $"{percentageScore}";
+            ResultLabel.Text = $"{percentageScore}%";
             Label2.Text = message;
             ResultPanel.BackColor = System.Drawing.ColorTranslator.FromHtml(backgroundColor);
         }
 
         protected void ContinueButton_Click(object sender, EventArgs e)
         {
-            // Your code logic for handling the button click event
+            Response.Redirect("HomePage.aspx");
         }
     }
 }
