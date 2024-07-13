@@ -9,17 +9,28 @@ namespace final_project
 {
     public partial class WebForm1 : System.Web.UI.Page
     {
-        private string studentCoursesDirectory = @"C:\project-csharp-feedback-system-main\project04\final-project\files\Courses\";
-        private string feedbackDirectory = @"C:\project-csharp-feedback-system-main\project04\final-project\files\Feedback\";
-        private string questionsDirectoryPath = @"C:\project-csharp-feedback-system-main\project04\final-project\QuestionsPerTechnology\";
+        private string studentCoursesDirectory;
+        private string feedbackDirectory;
+        private string questionsDirectoryPath;
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            // Initialize directories dynamically
+            InitializeDirectories();
+
             if (!IsPostBack)
             {
                 LoadCourses();
                 UsernameLabel.Text = Session["Name"]?.ToString() ?? "Guest";
             }
+        }
+
+        private void InitializeDirectories()
+        {
+            // Set dynamic paths
+            studentCoursesDirectory = Server.MapPath("~/files/Courses/");
+            feedbackDirectory = Server.MapPath("~/files/Feedback/");
+            questionsDirectoryPath = Server.MapPath("~/QuestionsPerTechnology/");
         }
 
         private void LoadCourses()
@@ -35,7 +46,7 @@ namespace final_project
             var courses = new List<string>();
             var completedCourses = new HashSet<string>();
 
-            // قراءة المواد التي تم تقييمها
+            // Read evaluated courses
             var feedbackFiles = Directory.GetFiles(feedbackDirectory, "*.txt");
             foreach (var feedbackFile in feedbackFiles)
             {
@@ -51,9 +62,9 @@ namespace final_project
                 if (lines.Any(line => line.Contains(email)))
                 {
                     var course = Path.GetFileNameWithoutExtension(file).Replace("Student", "");
-                    var studentName = lines.FirstOrDefault(line => line.Contains(email))?.Split(',')[1]; // استخرج اسم الطالب
+                    var studentName = lines.FirstOrDefault(line => line.Contains(email))?.Split(',')[1];
 
-                    // تحقق من عدم وجود تقييم سابق
+                    // Check if previous feedback exists
                     if (!completedCourses.Contains($"{studentName}_{course}"))
                     {
                         courses.Add(course);
@@ -117,16 +128,16 @@ namespace final_project
                 Directory.CreateDirectory(feedbackDirectory);
             }
 
-            // التأكد من أن الملف موجود، وإذا لم يكن موجودًا يتم إنشاؤه
+            // Ensure file exists, create if it doesn't
             if (!File.Exists(feedbackFilePath))
             {
-                using (var writer = new StreamWriter(feedbackFilePath, false)) // false لإنشاء ملف جديد
+                using (var writer = new StreamWriter(feedbackFilePath, false)) // false to create new file
                 {
                     writer.WriteLine($"Feedback by {studentName} for {selectedCourse}");
                 }
             }
 
-            using (var writer = new StreamWriter(feedbackFilePath, true)) // true للإضافة إلى الملف
+            using (var writer = new StreamWriter(feedbackFilePath, true)) // true to append to file
             {
                 foreach (RepeaterItem item in QuestionsRepeater.Items)
                 {
@@ -141,17 +152,17 @@ namespace final_project
                 writer.WriteLine("-----");
             }
 
-            // إزالة المادة من قائمة الاختيار
+            // Remove course from selection list
             CourseDropDownList.Items.Remove(selectedCourse);
 
-            // عرض رسالة تأكيد
+            // Display confirmation message
             Response.Write("<script>alert('Thank you for your feedback!');</script>");
             CourseDropDownList.ClearSelection();
             QuestionsPanel.Visible = false;
 
-            // تسجيل الخروج وإعادة التوجيه إلى صفحة تسجيل الدخول
-            Session.Abandon(); // إنهاء الجلسة
-            Response.Redirect("Login.aspx"); // إعادة التوجيه إلى صفحة تسجيل الدخول
+            // Logout and redirect to login page
+            Session.Abandon(); // End session
+            Response.Redirect("Login.aspx"); // Redirect to login page
         }
 
         public class Question
