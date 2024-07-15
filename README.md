@@ -1,1 +1,1 @@
-# project04
+This project is a web application for a Dynamic Online Feedback System, featuring a login page for student authentication, a homepage with an introduction, an administrator control panel for data management, and a student page for users to view their information and submit feedback. I implemented these pages to enhance functionality and improve the overall user experience.
